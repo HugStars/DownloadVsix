@@ -3,6 +3,7 @@
     "displayName": "下载Vsix",
     "description": "Download VSIX extensions easily.",
     "version": "0.0.1",
+    "author": "HugStars",
     "engines": {
         "vscode": "^1.75.0"
     },
