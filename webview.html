@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+    <meta charset="UTF-8">
+    <title>已安装扩展列表</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 10px;
+        }
+
+        .ext_item {
+            display: flex;
+            gap: 10px;
+            flex-direction: row;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+            padding: 8px;
+            border-radius: 6px;
+        }
+
+        .ext_info {
+            flex: 1;
+        }
+
+        .ext_handle {
+            width: 100%;
+        }
+
+        .ext_name {
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .ext_name span+span {
+            position: relative;
+            margin-left: 14px;
+            padding-left: 14px;
+        }
+
+        .ext_name span+span::after {
+            position: absolute;
+            display: block;
+            content: "";
+            width: 3px;
+            height: 16px;
+            top: 5px;
+            left: 0;
+            background: hsla(0, 0%, 50%, .7);
+        }
+
+
+        .ext_des {
+            font-family: "Segoe WPC", "Segoe UI", "Microsoft YaHei", sans-serif;
+        }
+
+        .ext_icon {
+            width: 64px;
+            height: 64px;
+            margin-right: 10px;
+            vertical-align: middle;
+            object-fit: scale-down;
+            position: relative;
+        }
+
+        .ext_icon::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: url('https://cdn.vsassets.io/v/M255_20250415.1/_content/Header/default_icon_128.png');
+            background-size: 64px;
+        }
+
+        button {
+            width: 64px;
+            height: 24px;
+            border: 0;
+            border-radius: 4px;
+            outline: 0;
+            background: var(--vscode-button-background);
+            color: var(--vscode-button-foreground);
+            font-size: 12px;
+            cursor: pointer;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        button:hover {
+            background: var(--vscode-button-hoverBackground);
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🧩 当前已安装的扩展</h1>
+    <div class="extension_list">加载中...</div>
+
+    <!-- EXTENSION_DATA -->
+
+    <script>
+        const vscode = acquireVsCodeApi()
+
+        const container = document.querySelector('.extension_list')
+        container.innerHTML = ''
+
+        extensions.forEach(ext => {
+            const div = document.createElement('div')
+            div.className = 'ext_item'
+            div.innerHTML = `
+                <img class="ext_icon" src="${ext.icon ? ext.icon : 'https://cdn.vsassets.io/v/M255_20250415.1/_content/Header/default_icon_128.png'}" />
+                <div class="ext_info">
+                    <div class="ext_name">
+                        <span>${ext.name}</span>
+                        <span>${ext.version}</span>
+                        <span>${ext.id}</span>
+                    </div>
+                    <div class="ext_des">${ext.folderName}</div>
+                    <div class="ext_des">${ext.description} </div>
+                </div>
+                <div class="ext_handle">
+                    <button data-id="${ext.id}">下载VSIX</button>
+                </div>
+            `
+            container.appendChild(div)
+        })
+
+        container.addEventListener('click', e => {
+            if (e.target.tagName !== 'BUTTON') return
+            downloadVsix(e.target.dataset.id)
+        })
+
+
+        function downloadVsix(extensionId) {
+            fetch("https://marketplace.visualstudio.com/_apis/public/gallery/extensionquery", {
+                method: "POST",
+                headers: {
+                    "accept": "application/json;api-version=3.0-preview.1",
+                    "content-type": "application/json",
+                    "x-market-client-id": "VSCode 1.96.0"
+                },
+                body: JSON.stringify({
+                    filters: [{
+                        criteria: [
+                            { filterType: 7, value: extensionId },
+                            { filterType: 8, value: "Microsoft.VisualStudio.Code" },
+                            { filterType: 12, value: "4096" }
+                        ],
+                        pageNumber: 1,
+                        pageSize: 1,
+                        sortBy: 0,
+                        sortOrder: 0
+                    }],
+                    assetTypes: [],
+                    flags: 950
+                })
+            }).then(res => res.json()).then(data => {
+                const versions = data.results?.[0]?.extensions?.[0]?.versions;
+                if (!versions || versions.length === 0) return vscode.postMessage({
+                    command: 'alert',
+                    message: "未找到扩展版本！"
+                })
+
+                const vsixAsset = versions[0].files.find(f => f.assetType === 'Microsoft.VisualStudio.Services.VSIXPackage')
+                if (vsixAsset) vscode.postMessage({
+                    command: 'download',
+                    url: vsixAsset.source,
+                    filename: extensionId + '.vsix'
+                })
+                else vscode.postMessage({
+                    command: 'alert',
+                    message: "未找到 VSIX 下载链接！"
+                })
+            }).catch(err => {
+                vscode.postMessage({
+                    command: 'alert',
+                    message: "请求失败，请检查网络或扩展信息。"
+                })
+            })
+        }
+
+    </script>
+</body>
+
+</html>
