@@ -48,6 +48,9 @@ function activate(context) {
             if (message.command === 'alert') {
                 vscode.window.showInformationMessage(message.message)
             }
+            if (message.command === 'openInBrowser') {
+                vscode.env.openExternal(vscode.Uri.parse(message.url));
+            }
         })
 
         panel.webview.html = htmlContent.replace('<!-- EXTENSION_DATA -->', `<script>const extensions = ${JSON.stringify(extensions)}</script>`)
