@@ -1,7 +1,7 @@
 {
     "name": "downloadvsix",
     "displayName": "下载Vsix",
-    "description": "Download VSIX extensions easily.",
+    "description": "一个下载VSCode Vsix格式扩展插件的插件",
     "version": "0.0.1",
     "author": "HugStars",
     "repository": {
