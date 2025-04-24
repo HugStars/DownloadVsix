@@ -5,10 +5,10 @@ const os = require('os')
 
 
 function activate(context) {
-    vscode.window.showInformationMessage('🎉 插件已激活，欢迎使用 DownLoadVsix 插件来下载 vsix 文件！')
+    // vscode.window.showInformationMessage('🎉 插件已激活，欢迎使用 DownLoadVsix 插件来下载 vsix 文件！')
 
-    let disposable = vscode.commands.registerCommand('downloadvsix.downloadExtension', function () {
-        vscode.window.showInformationMessage('🎉 插件命令触发成功！')
+    let disposable = vscode.commands.registerCommand('downloadvsix.downloadExtension', () => {
+        // vscode.window.showInformationMessage('🎉 插件命令触发成功！')
         const panel = vscode.window.createWebviewPanel(
             'downloadVsixWebview',
             '已安装扩展列表',
@@ -38,11 +38,11 @@ function activate(context) {
                 })
                 if (uri) {
                     const res = await fetch(message.url)
-                    vscode.window.showInformationMessage("下载中...")
+                    vscode.window.showInformationMessage("🚀 下载中...")
                     const arrayBuffer = await res.arrayBuffer()
                     const buffer = Buffer.from(arrayBuffer)
                     fs.writeFileSync(uri.fsPath, buffer)
-                    vscode.window.showInformationMessage("下载完成！")
+                    vscode.window.showInformationMessage("🎉 下载完成！")
                 }
             }
             if (message.command === 'alert') {
@@ -51,16 +51,19 @@ function activate(context) {
             if (message.command === 'openInBrowser') {
                 vscode.env.openExternal(vscode.Uri.parse(message.url));
             }
+            if (message.command === 'openExtension') {
+                vscode.env.openExternal(vscode.Uri.parse(`vscode:extension/${message.id}`))
+            }
         })
 
         panel.webview.html = htmlContent.replace('<!-- EXTENSION_DATA -->', `<script>const extensions = ${JSON.stringify(extensions)}</script>`)
     })
 
-    vscode.commands.executeCommand('downloadvsix.downloadExtension').then(() => {
-        // vscode.window.showInformationMessage('命令 downloadvsix.downloadExtension 已成功执行！')
-    }, (error) => {
-        // vscode.window.showErrorMessage(`执行命令时出错: ${error.message}`)
-    })
+    // vscode.commands.executeCommand('downloadvsix.downloadExtension').then(() => {
+    //     vscode.window.showInformationMessage('命令 downloadvsix.downloadExtension 已成功执行！')
+    // }, error => {
+    //     vscode.window.showErrorMessage(`执行命令时出错: ${error.message}`)
+    // })
 
     context.subscriptions.push(disposable)
 }
@@ -103,7 +106,8 @@ function getInstalledExtensionsFromFs() {
                 version: pkg.version,
                 description: pkg.description || '',
                 icon: pkg.icon ? getMarketplaceIconUrl(pkg) : '',
-                folderName: folder
+                folderName: folder,
+                href: `https://marketplace.visualstudio.com/_apis/public/gallery/publishers/${pkg.publisher}/vsextensions/${pkg.name}/${pkg.version}/vspackage`
             }
         }
         return null

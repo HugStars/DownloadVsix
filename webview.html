@@ -10,6 +10,15 @@
             padding: 10px;
         }
 
+        h1 {
+            position: sticky;
+            padding: 0.67em 0;
+            margin: 0;
+            top: 0;
+            background-color: var(--vscode-editor-background);
+            z-index: 1;
+        }
+
         .ext_item {
             display: flex;
             gap: 10px;
@@ -33,6 +42,16 @@
             font-size: 16px;
         }
 
+        .ext_name .name {
+            cursor: pointer;
+
+        }
+
+        .ext_name .name:hover {
+            text-decoration: underline;
+        }
+
+
         .ext_name span+span {
             position: relative;
             margin-left: 14px;
@@ -45,7 +64,7 @@
             content: "";
             width: 3px;
             height: 16px;
-            top: 5px;
+            top: 3px;
             left: 0;
             background: hsla(0, 0%, 50%, .7);
         }
@@ -73,9 +92,7 @@
         }
 
         button {
-            /* width: 64px; */
-            height: 24px;
-            padding: 0 14px;
+            padding: 6px 14px;
             border: 0;
             border-radius: 4px;
             outline: 0;
@@ -88,7 +105,7 @@
             white-space: nowrap;
         }
 
-        button+button{
+        button+button {
             margin-left: 10px;
         }
 
@@ -99,7 +116,7 @@
 </head>
 
 <body>
-    <h1>🧩 当前已安装的扩展</h1>
+    <h1></h1>
     <div class="extension_list">加载中...</div>
 
     <!-- EXTENSION_DATA -->
@@ -108,6 +125,8 @@
         const vscode = acquireVsCodeApi()
         const container = document.querySelector('.extension_list')
         container.innerHTML = ''
+        document.querySelector('h1').innerHTML = `🧩 当前已安装的扩展 (${extensions.length}个)`
+
 
 
         extensions.forEach(ext => {
@@ -117,7 +136,7 @@
                 <img class="ext_icon" src="${ext.icon ? ext.icon : 'https://cdn.vsassets.io/v/M255_20250415.1/_content/Header/default_icon_128.png'}" />
                 <div class="ext_info">
                     <div class="ext_name">
-                        <span>${ext.name}</span>
+                        <span class="name" data-id="${ext.id}">${ext.name}</span>
                         <span>${ext.version}</span>
                         <span>${ext.id}</span>
                     </div>
@@ -126,6 +145,7 @@
                 </div>
                 <div class="ext_handle">
                     <button data-id="${ext.id}" class="down">下载VSIX</button>
+                    <button data-href="${ext.href}" class="href">浏览器下载VSIX</button>
                     <button data-id="${ext.id}" class="open">浏览器下载（需手动命名）</button>
                     <button data-id="${ext.id}" class="zip">浏览器下载zip包（需手动命名）</button>
                 </div>
@@ -135,7 +155,16 @@
 
 
         container.addEventListener('click', e => {
+            if (e.target.className === 'name' && e.target.tagName === 'SPAN') return vscode.postMessage({
+                command: 'openExtension',
+                id: e.target.dataset.id
+            })
+
             if (e.target.tagName !== 'BUTTON') return
+            if (e.target.dataset.href) return vscode.postMessage({
+                command: 'openInBrowser',
+                url: e.target.dataset.href
+            })
             downloadVsix(e.target.dataset.id, e.target.className)
         })
 
